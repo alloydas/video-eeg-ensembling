@@ -1,0 +1,12 @@
+# Never commit data. The DSI epoch export is ~7 GB and the clip corpus ~36 GB.
+raw_epoch_features/
+*.edf
+*.mp4
+*.xlsx
+*.npz
+*.zip
+cache/
+output/
+__pycache__/
+*.pyc
+.venv/
