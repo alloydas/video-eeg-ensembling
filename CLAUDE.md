@@ -52,3 +52,11 @@ use a venv with `--system-site-packages`. Every script reads `EEG_ROOT` for the 
 - Video ensembling erases the parent paper's 0.006 macro-F1 detection margin for EEG, but the
   two are scored on different clip sets, so neither direction is established until both are
   recomputed on the 2,830-clip intersection.
+
+## Related repositories
+
+Each is a separate folder with its own CLAUDE.md. Do not re-add their code here.
+
+- `rodent-eeg-band-analysis` — epoch-export verification and frequency-band structure.
+- `rodent-seizure-preictal` — whether anything changes before seizure onset (it does not).
+- `EEG-seizure-classification` — the parent project: training code, checkpoints, the paper.
