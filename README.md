@@ -54,6 +54,17 @@ best single run.
 3. **Runs without a stored `path`** (the HuggingFace trainers) are admitted only if their raw
    label sequence matches the reference's, i.e. they are already in reference order.
 
+## Cross-modal fusion
+
+`fusion/` holds the video+EEG fusion analysis. Its current results were measured on an
+accidental 2,830-clip intersection that drops 3 of 18 animals and 56% of the severe clips —
+see CLAUDE.md. `fusion/align_aligned_split.py` builds the correct 5,279-clip aligned pairing
+(3-class only for now); re-measuring on it is the open work.
+
+What already holds: fusion is a clear win at detection (+0.0158 macro-F1) and a non-event at
+severity — every posterior-combination rule loses severe recall, and severe recall is monotone
+in the video weight with its maximum at pure video.
+
 ## Running it
 
 Python 3.11+ with `numpy`, `scipy` and `scikit-learn`. Point at the run tree and go:

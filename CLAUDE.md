@@ -53,6 +53,69 @@ use a venv with `--system-site-packages`. Every script reads `EEG_ROOT` for the 
   two are scored on different clip sets, so neither direction is established until both are
   recomputed on the 2,830-clip intersection.
 
+## `fusion/` — read this before touching it
+
+Cross-modal fusion of the video and EEG posteriors. **The results currently in this
+directory were measured on the wrong set.** Fixing that is the open work.
+
+### The split problem
+
+Both training pipelines shuffle sessions with seed 49, but they shuffle *different lists*:
+`train_pooled.discover()` finds 604 sessions with video, the EEG segment cache holds 601
+(three RN216 sessions have video but no usable EEG window). A three-element difference
+re-permutes everything, so the two 20% prefixes agree on only **56 sessions / 2,830 clips**.
+This is documented verbatim in `train_pooled_eeg.py:145-178` in the parent repo.
+
+That 2,830-clip intersection is a bad set for this question: it **drops 3 of 18 animals**
+(RN216, RN222, RN229), cuts the inverse-Simpson effective animal count from 10.8 to 6.2,
+holds only **44% of the severe clips**, is **6x enriched in Stage 2**, has shorter seizures
+(median 44.3 s vs 55.2 / 58.7 s), and shifts each modality's own baseline by up to 0.056 —
+**amplifying whichever modality already leads on that task**. Never report a fusion number
+on it.
+
+### Use the aligned split instead
+
+`train_pooled_eeg.video_val_sessions()` (P1.1) takes the session universe from the VIDEO
+item list, so the EEG validation set is a strict **subset** of video's. `output/v3_eegalign/`
+holds runs trained that way. `fusion/align_aligned_split.py` builds the pairing and verifies
+it: **5,279 clips, 17 animals, labels agreeing 5,279/5,279, 40 video members and 10 EEG
+members.** Start there.
+
+Coverage limit: `v3_eegalign` covers the **3-class task only**, GRU and TCN, 5 seeds each.
+Detection and 5-class fusion on the aligned split need EEG retraining first.
+
+### What the (biased-set) results already establish
+
+The direction is consistent enough that the aligned re-run is expected to sharpen it, not
+reverse it. Do not let a macro-F1 gain talk you out of it:
+
+- **Detection: fusion wins.** 0.9745 -> 0.9904, +0.0158 [+0.0067, +0.0252].
+- **Severity: every posterior-combination rule loses severe recall.** Video 41/88; average
+  38, geometric 37, stacking 30. In 4,000 animal resamples, averaging never once beat video.
+- **Severe recall is monotone in the video weight** (0.216 at pure EEG to 0.466 at pure
+  video). There is no interior optimum — the macro-F1 peak near w = 0.5 is just where EEG's
+  class-0 gain offsets the severe recall it destroys.
+- **Within session, no variant beats video** (0.9014 vs 0.9014 at best). EEG severity
+  collapses out of session: 0.8185 pooled -> 0.6123 within. Video loses only 0.048.
+- **Rules that "raise severe recall" are prior reweighting, and video alone does it better**:
+  video/prior gets 88/88 severe at macro-F1 0.7252 against fused rank-averaging's 88/88 at
+  0.6164.
+- **Max-confidence gating picks video on 94-97% of clips** — it is the detection gate wearing
+  a different name.
+
+Correction to the plan of record: the standing "-0.0765 severe recall, P = 0.001" does **not**
+reproduce. Here it is -0.0341 with a sign test of p = 0.50. The honest statement is *fusion
+never helps severe recall and sometimes costs about three clips*, not *significantly hurts*.
+
+### Rules for this directory
+
+- Report **per-class recall with counts** beside every macro number, and report severity
+  **within session** as well as pooled. Stage 5 is 14 clips on the old set.
+- A fusion weight or threshold chosen on the test set is an upper bound — label it.
+- Before claiming EEG adds severity information, run the **video-only control**: the same
+  reweighting applied to video posteriors alone. Every apparent fusion gain so far has been
+  a threshold move video can make by itself.
+
 ## Related repositories
 
 Each is a separate folder with its own CLAUDE.md. Do not re-add their code here.
