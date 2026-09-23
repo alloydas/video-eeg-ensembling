@@ -10,6 +10,9 @@ video at every task and makes EEG worse at every task.**
   within each modality.
 - **[Two Signals, One Grader](https://claude.ai/artifact/Hriai3zgaD746ERsvJyqLy)** — fusing video
   and EEG, re-measured on the matched 5,279-clip split.
+- **[Two-Timescale Grader](https://claude.ai/artifact/6N2pfGmowBXrdrsP3Nk6tJ)** — a proposed new
+  3-/5-class grading model, the evidence behind each part, and a gated GPU plan (not yet run;
+  training code lives in the parent repo).
 
 ## The result
 
