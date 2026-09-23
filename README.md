@@ -4,8 +4,12 @@ Ensembling the validation posteriors that a video–EEG rodent seizure project a
 disk — 175 stored runs, no retraining, no GPU. The result is asymmetric: **averaging improves
 video at every task and makes EEG worse at every task.**
 
-**[Forty Runs, No Retraining](docs/ensembling.html)** is the self-contained report. Open it in
-a browser.
+**Reports** (Claude artifacts, private — ask for access):
+
+- **[Forty Runs, No Retraining](https://claude.ai/artifact/X17Yb17CRQSniNCjDqQmNd)** — ensembling
+  within each modality.
+- **[Two Signals, One Grader](https://claude.ai/artifact/Hriai3zgaD746ERsvJyqLy)** — fusing video
+  and EEG, re-measured on the matched 5,279-clip split.
 
 ## The result
 
@@ -59,7 +63,8 @@ best single run.
 `fusion/` holds the video+EEG fusion analysis. Its current results were measured on an
 accidental 2,830-clip intersection that drops 3 of 18 animals and 56% of the severe clips —
 see CLAUDE.md. `fusion/align_aligned_split.py` builds the correct 5,279-clip aligned pairing
-(3-class only for now); re-measuring on it is the open work.
+(3-class only for now); the re-measurement on it is in
+[Two Signals, One Grader](https://claude.ai/artifact/Hriai3zgaD746ERsvJyqLy).
 
 What already holds: fusion is a clear win at detection (+0.0158 macro-F1) and a non-event at
 severity — every posterior-combination rule loses severe recall, and severe recall is monotone
