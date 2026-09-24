@@ -83,11 +83,16 @@ Every script reads `EEG_ROOT` for the run tree.
 - **EEG-Gated Racine Grader** (`grader/`). Tested on unseen animals: subject-disjoint 5-fold
   out-of-fold, 20 animals, 24,452 clips. Both networks are read at their pre-registered last
   epoch, and the gate is fitted leave-one-animal-out.
-  - 3-class 0.710 → **0.750**; 5-class 0.514 → **0.557** (video alone → EGRG).
-  - **The gain is detection** (0.927 → 0.984). Severity is video's within-seizure split by
-    construction, and severe recall does not move (426 → 424 of 1,257).
-  - Across three EEG seeds the gain moves by at most 0.002 (sd 0.001). The **video seed
-    spread is not yet measured**, so quote the headline as one video network.
+  - Fixed X3D, mean of 3 video × 3 EEG seeds: 3-class 0.708 → **0.749**, 5-class
+    0.503 → **0.547** (video alone → EGRG). All 9 seed pairs gain, by +0.0406 ± 0.0008 and
+    +0.0437 ± 0.0009; the smallest gains are +0.039 and +0.042.
+  - The level is set by the video seed (5-class sd 0.010), not the EEG seed (≤ 0.001). The
+    first-reported 0.750 / 0.557 was video seed 1, the best of three at 5-class. Quote the
+    seed mean.
+  - **The gain is detection** (0.927 → 0.985). Severity is video's within-seizure split by
+    construction, and severe hits move by −2 to +2 of 1,257 across the 9 pairs.
+  - The original (bugged) X3D is 0.009 better at 3-class with the gate (0.758), but it finds
+    0 of 194 Stage-5 clips in every seed. The fixed X3D is the recommended grader.
   - On the matched 5,279-clip split, EGRG beats the unfitted post-hoc gate by only
     +0.0012 [−0.0014, +0.0055] at 3-class.
 - **Video-only changes did not improve the ensemble.** They are negatives; do not re-propose

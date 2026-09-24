@@ -19,9 +19,29 @@ reference runs, and every output these scripts write. The code was moved here fr
 Unseen animals: protocol B, subject-disjoint 5-fold out-of-fold (`split_subjects`, seed 49;
 the EEG and video folds hold identical animals, checked by `eeg/check_folds.py`). 20 animals,
 24,452 clips with both modalities (the 45 video clips without EEG are dropped and counted).
-Fixed X3D-M dual-head grader (seed 1, last epoch 12) plus the TCN detector (seed 1, last epoch
-30). The gate is fitted leave-one-animal-out. Both networks are read at their pre-registered
-last epoch, with no epoch selection.
+Fixed X3D-M dual-head grader (last epoch 12) plus the TCN detector (last epoch 30), each with
+3 seeds, scored as all 9 single-network pairs. The gate is fitted leave-one-animal-out. Both
+networks are read at their pre-registered last epoch, with no epoch selection.
+
+| task | video alone (3 seeds) | EGRG (9 pairs) | EGRG − video (9 pairs) | smallest gain | severe hits change |
+|---|---|---|---|---|---|
+| 3-class | 0.708 ± 0.001 | **0.749 ± 0.001** | +0.0406 ± 0.0008 | +0.0392 | −2 to 0 / 1257 |
+| 5-class | 0.503 ± 0.011 | **0.547 ± 0.009** | +0.0437 ± 0.0009 | +0.0422 | −2 to +2 / 1257 |
+
+Macro-F1, mean ± sd, gains as per-pair point differences. Source:
+`$EEG_ROOT/output/ttg_eeg_gate/seeds/B_x3dfix_grid3x3` (and `B_x3dbug_grid3x3` for the
+original X3D).
+
+- **The level is set by the video seed** (5-class sd 0.010 across video seeds, ≤ 0.001 across
+  EEG seeds). The pair first reported below, video seed 1, is the best of three at 5-class
+  (0.557 against 0.547 and 0.537 averaged over EEG seeds), so quote the seed mean.
+- **The original (bugged) X3D** reaches 0.758 ± 0.004 at 3-class with the gate, 0.009 above
+  the fixed one, but 0.503 ± 0.010 at 5-class. It finds 0 of 194 Stage-5 clips in every seed,
+  against 47, 38 and 43 for the fixed X3D. The fixed X3D is the recommended grader.
+- **Averaging the 3 video and 3 EEG networks** gives 0.755 / 0.554 (+0.007 over a single
+  pair) for three times the video compute.
+
+One seed pair in detail, video seed 1 + EEG seed 1:
 
 | task | video alone | EGRG | EGRG − video, bootstrap mean [95% CI] | severe hits |
 |---|---|---|---|---|
@@ -37,19 +57,15 @@ Per-class recall, hits / clips, video → EGRG:
 
 How to read it:
 
-- **The gain is detection.** Detection macro-F1 goes from 0.927 to 0.984. Severity is graded
+- **The gain is detection.** Detection macro-F1 goes from 0.927 to 0.984 in this pair. Severity is graded
   by video's within-seizure split by construction, so severe recall does not improve (it loses
   2 clips at both tasks). The within-session severe-vs-mild AUROC stays video's (0.744 at
   3-class).
 - **The CIs understate the uncertainty.** They come from an animal-clustered bootstrap
   (2,000 replicates) that holds the gate's leave-one-animal-out outputs fixed, so the
   variability of fitting the gate is not propagated.
-- **The EEG seed barely matters.** With the video seed held at 1, three EEG detector seeds
-  give EGRG − video point differences of +0.0401 (sd 0.0010) at 3-class and +0.0432
-  (sd 0.0009) at 5-class. The severe-vs-mild ranking is identical, being video's.
-  Stored in `$EEG_ROOT/output/ttg_eeg_gate/seeds/B_x3dfix_s1_eeg3`.
-- **The video seed is not yet measured.** Seeds 2 and 3 (`eeg/video_subject_s23.tsv`) are
-  queued, so the headline is still one video network.
+- **Three seeds indicate the spread; they do not pin it down.** All runs share one set of
+  subject folds (`split_subjects` seed 49).
 
 `eeg/joint_gate.py` run from this directory reproduces every number of the stored run
 (`$EEG_ROOT/output/ttg_eeg_gate/final/B_x3dfix_eegs1`): EGRG 0.7496809630 / 0.5572929862.
@@ -94,6 +110,11 @@ cd /work/mech-ai-scratch/alloy/video-eeg-ensembling    # any cwd works
 # the headline (protocol B, fixed X3D seed 1 x TCN seed 1)
 $PY grader/eeg/joint_gate.py --protocol B --video 'output/ttg_vsubj/x3dfix_dual_s1_fold{f}' --video_epoch 12 \
     --eeg 'output/ttg_eeg/subject/tcn_bin_fold{f}_s1' --eeg_epoch 30 --rows headline \
+    --out $EEG_ROOT/output/ttg_eeg_gate/<name>
+# the seed grid (3 video x 3 EEG seeds; --rows all adds every single x single pair)
+# (bash brace expansion gives three run templates each and leaves the {f} placeholder alone)
+$PY grader/eeg/joint_gate.py --protocol B --video output/ttg_vsubj/x3dfix_dual_s{1,2,3}_fold{f} --video_epoch 12 \
+    --eeg output/ttg_eeg/subject/tcn_bin_fold{f}_s{1,2,3} --eeg_epoch 30 --rows all \
     --out $EEG_ROOT/output/ttg_eeg_gate/<name>
 $PY grader/eeg/joint_gate.py --regression --out $EEG_ROOT/output/ttg_eeg_gate/<name>   # must print 46/46
 
