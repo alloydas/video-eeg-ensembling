@@ -1,0 +1,8 @@
+# EGRG EEG detector, protocol A: aligned 5,279-clip split (--split session --session_universe video,
+# a strict subset of the 5,289-clip video session-split seed-49 val set), binary TCN, 30 epochs,
+# LAST epoch reported (no selection). Driver: grader/eeg/sbatch_eeg_det.sh (3 lines -> --array=0-2);
+# submit with grader/eeg/submit_eeg.sh aligned (dry-run unless DRY_RUN=0).
+# Columns: name  split  universe  fold  seed  output  [extra trainer flags]
+tcn_bin_aligned_s1	session	video	0	1	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/aligned/tcn_bin_s1	-
+tcn_bin_aligned_s2	session	video	0	2	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/aligned/tcn_bin_s2	-
+tcn_bin_aligned_s3	session	video	0	3	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/aligned/tcn_bin_s3	-

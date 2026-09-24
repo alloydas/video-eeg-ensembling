@@ -1,0 +1,22 @@
+# EGRG protocol B video side: fixed-epoch SUBJECT-DISJOINT folds for the TT-X3D video grader
+# (grader/train_grader.py --split subject --fold k; split_subjects seed 49 = the same 4 animals per
+# fold as the EEG folds, verified by grader/eeg/check_folds.py). One seed, dual heads (g3 + g5), two
+# recipes: x3dbug = no --fix_x3d (historical head softmax; the historically best 3-class X3D) and
+# x3dfix = --fix_x3d. 12 epochs, lr 1e-4, batch 8 (fixed by the driver), per-epoch val_ep*.npz,
+# LAST epoch reported. NOT SUBMITTED.
+# Driver: the existing grader/sbatch_grader.sh (10 lines -> --array=0-9). Preview / submit with
+#   bash grader/eeg/submit_eeg.sh video               (DRY RUN by default)
+#   DRY_RUN=0 bash grader/eeg/submit_eeg.sh video     (really submits, via grader/submit_ttg.sh stage1)
+# CAUTION: calling grader/submit_ttg.sh directly SUBMITS by default (its DRY_RUN defaults to 0).
+# joint_gate.py reads them as templates output/ttg_vsubj/x3dbug_dual_s1_fold{f} / x3dfix_dual_s1_fold{f}.
+# Columns: name  arch  fix(fixed|bugged)  heads(dual|g3|g5)  seed  split(session|subject)  fold  output  [extra flags]
+x3dbug_dual_s1_fold0	x3d	bugged	dual	1	subject	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_vsubj/x3dbug_dual_s1_fold0	-
+x3dbug_dual_s1_fold1	x3d	bugged	dual	1	subject	1	/work/mech-ai-scratch/alloy/EEG/output/ttg_vsubj/x3dbug_dual_s1_fold1	-
+x3dbug_dual_s1_fold2	x3d	bugged	dual	1	subject	2	/work/mech-ai-scratch/alloy/EEG/output/ttg_vsubj/x3dbug_dual_s1_fold2	-
+x3dbug_dual_s1_fold3	x3d	bugged	dual	1	subject	3	/work/mech-ai-scratch/alloy/EEG/output/ttg_vsubj/x3dbug_dual_s1_fold3	-
+x3dbug_dual_s1_fold4	x3d	bugged	dual	1	subject	4	/work/mech-ai-scratch/alloy/EEG/output/ttg_vsubj/x3dbug_dual_s1_fold4	-
+x3dfix_dual_s1_fold0	x3d	fixed	dual	1	subject	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_vsubj/x3dfix_dual_s1_fold0	-
+x3dfix_dual_s1_fold1	x3d	fixed	dual	1	subject	1	/work/mech-ai-scratch/alloy/EEG/output/ttg_vsubj/x3dfix_dual_s1_fold1	-
+x3dfix_dual_s1_fold2	x3d	fixed	dual	1	subject	2	/work/mech-ai-scratch/alloy/EEG/output/ttg_vsubj/x3dfix_dual_s1_fold2	-
+x3dfix_dual_s1_fold3	x3d	fixed	dual	1	subject	3	/work/mech-ai-scratch/alloy/EEG/output/ttg_vsubj/x3dfix_dual_s1_fold3	-
+x3dfix_dual_s1_fold4	x3d	fixed	dual	1	subject	4	/work/mech-ai-scratch/alloy/EEG/output/ttg_vsubj/x3dfix_dual_s1_fold4	-

@@ -1,0 +1,8 @@
+# EGRG seed-spread run (2026-09-24): EEG detector subject folds, seed 3 (seeds 1-2 in grader/eeg/eeg_subject.tsv).
+# Same recipe: binary TCN, 30 epochs, LAST epoch. Driver: grader/eeg/sbatch_eeg_det.sh (5 lines -> --array=0-4).
+# Columns: name  split  universe  fold  seed  output  [extra trainer flags]
+tcn_bin_subj_f0_s3	subject	-	0	3	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold0_s3	-
+tcn_bin_subj_f1_s3	subject	-	1	3	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold1_s3	-
+tcn_bin_subj_f2_s3	subject	-	2	3	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold2_s3	-
+tcn_bin_subj_f3_s3	subject	-	3	3	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold3_s3	-
+tcn_bin_subj_f4_s3	subject	-	4	3	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold4_s3	-

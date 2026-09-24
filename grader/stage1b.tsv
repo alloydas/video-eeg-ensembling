@@ -1,0 +1,10 @@
+# Stage 1b (see grader/stage1b_prereg.md). Columns: name arch fix heads seed split fold output [extra flags]
+x3dfix_ctrl_s4	x3d	fixed	dual	4	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1b/x3dfix_ctrl_s4	-
+x3dfix_ctrl_s5	x3d	fixed	dual	5	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1b/x3dfix_ctrl_s5	-
+x3dfix_ctrl_s6	x3d	fixed	dual	6	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1b/x3dfix_ctrl_s6	-
+x3dfix_aug_s4	x3d	fixed	dual	4	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1b/x3dfix_aug_s4	--augment
+x3dfix_aug_s5	x3d	fixed	dual	5	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1b/x3dfix_aug_s5	--augment
+x3dfix_aug_s6	x3d	fixed	dual	6	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1b/x3dfix_aug_s6	--augment
+x3dfix_bound_s4	x3d	fixed	dual	4	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1b/x3dfix_bound_s4	--logit_bound 1.0
+x3dfix_bound_s5	x3d	fixed	dual	5	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1b/x3dfix_bound_s5	--logit_bound 1.0
+x3dfix_bound_s6	x3d	fixed	dual	6	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1b/x3dfix_bound_s6	--logit_bound 1.0

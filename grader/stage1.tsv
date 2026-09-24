@@ -1,0 +1,17 @@
+# TT-X3D Stage 1 config table for grader/sbatch_grader.sh (one array task per non-comment line;
+# 11 lines -> sbatch --array=0-10). Columns (whitespace-separated):
+#   name  arch  fix(fixed|bugged)  heads(dual|g3|g5)  seed  split(session|subject)  fold  output  [extra flags]
+# All arms: seed-49 session split (5,289 val clips), historical f16s224 input rebuilt from data_full,
+# 12 epochs, lr 1e-4, batch 8, no augmentation, per-epoch val dumps (last epoch = pre-registered).
+# The two bugged dual runs are the rebuilt-cache control against the stored bugged X3D seeds.
+x3dfix_dual_s1	x3d	fixed	dual	1	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1/x3dfix_dual_s1
+x3dfix_dual_s2	x3d	fixed	dual	2	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1/x3dfix_dual_s2
+x3dfix_dual_s3	x3d	fixed	dual	3	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1/x3dfix_dual_s3
+x3dfix_g3_s1	x3d	fixed	g3	1	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1/x3dfix_g3_s1
+x3dfix_g3_s2	x3d	fixed	g3	2	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1/x3dfix_g3_s2
+x3dfix_g3_s3	x3d	fixed	g3	3	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1/x3dfix_g3_s3
+x3dfix_g5_s1	x3d	fixed	g5	1	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1/x3dfix_g5_s1
+x3dfix_g5_s2	x3d	fixed	g5	2	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1/x3dfix_g5_s2
+x3dfix_g5_s3	x3d	fixed	g5	3	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1/x3dfix_g5_s3
+x3dbug_dual_s1	x3d	bugged	dual	1	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1/x3dbug_dual_s1
+x3dbug_dual_s2	x3d	bugged	dual	2	session	0	/work/mech-ai-scratch/alloy/EEG/output/ttg_stage1/x3dbug_dual_s2

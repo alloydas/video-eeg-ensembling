@@ -1,0 +1,16 @@
+# EGRG EEG detector, protocol B: subject-disjoint folds (split_subjects seed 49, 5 folds of 4 animals;
+# identical animals to the video folds, see grader/eeg/check_folds.py), binary TCN, 30 epochs, LAST epoch
+# reported. universe is '-' on purpose: --session_universe video is refused with --split subject.
+# Driver: grader/eeg/sbatch_eeg_det.sh (10 lines -> --array=0-9); submit with grader/eeg/submit_eeg.sh subject.
+# joint_gate.py reads them as the templates output/ttg_eeg/subject/tcn_bin_fold{f}_s1 and _s2.
+# Columns: name  split  universe  fold  seed  output  [extra trainer flags]
+tcn_bin_subj_f0_s1	subject	-	0	1	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold0_s1	-
+tcn_bin_subj_f1_s1	subject	-	1	1	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold1_s1	-
+tcn_bin_subj_f2_s1	subject	-	2	1	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold2_s1	-
+tcn_bin_subj_f3_s1	subject	-	3	1	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold3_s1	-
+tcn_bin_subj_f4_s1	subject	-	4	1	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold4_s1	-
+tcn_bin_subj_f0_s2	subject	-	0	2	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold0_s2	-
+tcn_bin_subj_f1_s2	subject	-	1	2	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold1_s2	-
+tcn_bin_subj_f2_s2	subject	-	2	2	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold2_s2	-
+tcn_bin_subj_f3_s2	subject	-	3	2	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold3_s2	-
+tcn_bin_subj_f4_s2	subject	-	4	2	/work/mech-ai-scratch/alloy/EEG/output/ttg_eeg/subject/tcn_bin_fold4_s2	-

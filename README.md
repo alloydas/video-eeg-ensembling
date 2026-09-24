@@ -12,7 +12,7 @@ video at every task and makes EEG worse at every task.**
   and EEG, re-measured on the matched 5,279-clip split.
 - **[EEG-Gated Racine Grader](https://claude.ai/artifact/GFJSpQBMzUPgK5HPDxJirC)** — trained and
   tested: an EEG seizure detector gates the video grader, lifting 3-class to 0.750 and 5-class to
-  0.557 on unseen animals, with model diagrams (training code lives in the parent repo).
+  0.557 on unseen animals, with model diagrams (training and scoring code in `grader/`).
 - **[Two-Timescale Grader](https://claude.ai/artifact/6N2pfGmowBXrdrsP3Nk6tJ)** — the proposal that
   led there; its dense-video pathway was killed at the first gate.
 
@@ -51,6 +51,7 @@ best single run.
 | `ensembles/ens_sel.py` | Selective ensembling — deep-only, drop-collapsed, and two oracle rules. |
 | `ensembles/ens_err.py` | Splits error into the part every member shares and the part averaging can recover. |
 | `ensembles/align_modalities.py` | Builds the clip intersection between the two modalities' validation sets. |
+| `grader/` | The EEG-Gated Racine Grader: video grader and EEG detector trainers, the joint gate, SLURM drivers and figures. Needs torch; data, caches and outputs stay in the parent `EEG` repo. See `grader/README.md`. |
 
 ## Three things that change the numbers
 
@@ -87,6 +88,9 @@ python ensembles/ens_err.py      # shared vs recoverable error
 ```
 
 Install `scikit-learn` into a virtual environment, not a shared base interpreter.
+
+The grader in `grader/` needs torch and a GPU cluster. Its environment, SLURM drivers and the
+command that reproduces the headline result are in `grader/README.md`.
 
 ## Caveat that governs everything
 
