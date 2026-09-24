@@ -86,7 +86,8 @@ Every script reads `EEG_ROOT` for the run tree.
   - 3-class 0.710 → **0.750**; 5-class 0.514 → **0.557** (video alone → EGRG).
   - **The gain is detection** (0.927 → 0.984). Severity is video's within-seizure split by
     construction, and severe recall does not move (426 → 424 of 1,257).
-  - This is **one video seed × one EEG seed**. Quote it that way until the seed grid is scored.
+  - Across three EEG seeds the gain moves by at most 0.002 (sd 0.001). The **video seed
+    spread is not yet measured**, so quote the headline as one video network.
   - On the matched 5,279-clip split, EGRG beats the unfitted post-hoc gate by only
     +0.0012 [−0.0014, +0.0055] at 3-class.
 - **Video-only changes did not improve the ensemble.** They are negatives; do not re-propose

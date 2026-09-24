@@ -12,7 +12,7 @@ This directory holds **code only**. The parent repository `EEG` (`EEG_ROOT`, def
 (`train_pooled.py`, `train_classifier.py`, `train_pooled_eeg.py` and their helpers
 `preds_io`, `frame_cache`, ...), the aligned-split checker `check_eeg_align.py`, the stored
 reference runs, and every output these scripts write. The code was moved here from
-`EEG/ttg/` on 2026-09-24. Runs already queued from `EEG/ttg/` keep using that copy.
+`EEG/ttg/` on 2026-09-24, and `EEG/ttg/` was deleted (EEG commit `9f0a77e`).
 
 ## Headline result
 
@@ -44,9 +44,12 @@ How to read it:
 - **The CIs understate the uncertainty.** They come from an animal-clustered bootstrap
   (2,000 replicates) that holds the gate's leave-one-animal-out outputs fixed, so the
   variability of fitting the gate is not propagated.
-- **This is one video seed × one EEG seed.** The seed-spread runs (`eeg/video_subject_s23.tsv`,
-  `eeg/eeg_subject_s3.tsv`) were still queued when the code was moved and are not in these
-  numbers.
+- **The EEG seed barely matters.** With the video seed held at 1, three EEG detector seeds
+  give EGRG − video point differences of +0.0401 (sd 0.0010) at 3-class and +0.0432
+  (sd 0.0009) at 5-class. The severe-vs-mild ranking is identical, being video's.
+  Stored in `$EEG_ROOT/output/ttg_eeg_gate/seeds/B_x3dfix_s1_eeg3`.
+- **The video seed is not yet measured.** Seeds 2 and 3 (`eeg/video_subject_s23.tsv`) are
+  queued, so the headline is still one video network.
 
 `eeg/joint_gate.py` run from this directory reproduces every number of the stored run
 (`$EEG_ROOT/output/ttg_eeg_gate/final/B_x3dfix_eegs1`): EGRG 0.7496809630 / 0.5572929862.
@@ -143,7 +146,7 @@ How the drivers find things:
   helpers export it), then the checkout `sbatch` was run from (`$SLURM_SUBMIT_DIR/grader`,
   or `$SLURM_SUBMIT_DIR` itself or its parent when that is `grader/` or `grader/eeg/`), then
   the default `/work/mech-ai-scratch/alloy/video-eeg-ensembling/grader`. The old `EEG/ttg/`
-  copy has no `dhlib.py`, so it is never picked up by accident.
+  copy (now deleted) had no `dhlib.py`, so it could never be picked up by accident.
 - **Tables.** A relative table path is resolved against the directory `sbatch` / `bash` was
   run from, then against `grader/` (and `grader/eeg/` for the detector). A table found in none
   of them is refused. It is never looked up under `EEG_ROOT`, so `ttg/stage1.tsv` cannot
