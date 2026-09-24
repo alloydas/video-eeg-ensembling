@@ -10,9 +10,11 @@ video at every task and makes EEG worse at every task.**
   within each modality.
 - **[Two Signals, One Grader](https://claude.ai/artifact/Hriai3zgaD746ERsvJyqLy)** — fusing video
   and EEG, re-measured on the matched 5,279-clip split.
-- **[Two-Timescale Grader](https://claude.ai/artifact/6N2pfGmowBXrdrsP3Nk6tJ)** — a proposed new
-  3-/5-class grading model, the evidence behind each part, and a gated GPU plan (not yet run;
-  training code lives in the parent repo).
+- **[EEG-Gated Racine Grader](https://claude.ai/artifact/GFJSpQBMzUPgK5HPDxJirC)** — trained and
+  tested: an EEG seizure detector gates the video grader, lifting 3-class to 0.750 and 5-class to
+  0.557 on unseen animals, with model diagrams (training code lives in the parent repo).
+- **[Two-Timescale Grader](https://claude.ai/artifact/6N2pfGmowBXrdrsP3Nk6tJ)** — the proposal that
+  led there; its dense-video pathway was killed at the first gate.
 
 ## The result
 
