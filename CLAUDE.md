@@ -103,6 +103,16 @@ Every script reads `EEG_ROOT` for the run tree.
     was adopted.
   - The dense-temporal pathway was killed at its frozen-probe gate: frame-shuffled input
     matches it, so its gain is appearance, not motion.
+- **A pretrained video JEPA was killed at its pre-registered gate** (Step 0,
+  `grader/step0_vjepa_prereg.md`, 2026-09-25). The model was frozen V-JEPA 2 ViT-L, with a linear
+  probe and within-session severe-vs-mild AUROC on unseen animals.
+  - Dense: 0.681. Frame-shuffled: 0.681 (d = +0.0005 [−0.019, +0.024]).
+  - Frozen Kinetics X3D: 0.728. The fine-tuned X3D grader: 0.744.
+  - Frame order carries no severity signal for either backbone on unseen animals (X3D 0.728 vs
+    0.731 shuffled).
+  - Do not fund JEPA / future-latent pretraining for severity without new evidence.
+  - Not registered, a hypothesis only: V-JEPA 2 on the sparse whole-clip frames reached 0.747
+    (vs X3D sparse 0.709). Testing it needs its own pre-registration.
 
 ## `fusion/` — read this before touching it
 

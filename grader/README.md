@@ -96,6 +96,7 @@ run time, `argv`, the dhlib path and the descriptive source strings (`ttg/` → 
 | `eeg/verify_eeg_det.py`, `eeg/verify_joint_gate.py` | CPU verification suites for the detector (against the original trainer) and for the gate (synthetic dumps, real tiny runs, frozen gates). |
 | `eeg/sbatch_eeg_det.sh`, `eeg/submit_eeg.sh` | SLURM driver and submission helper for the detector. |
 | `eeg/*.tsv` | Tables: `eeg_aligned`, `eeg_subject`, `eeg_subject_s3` (detector); `video_subject`, `video_subject_s23` (video folds, driven by `sbatch_grader.sh`). |
+| `step0_vjepa_prereg.md`, `step0_vjepa_extract.py`, `step0_vjepa_analysis.py` | Step 0 of the JEPA plan: frozen V-JEPA 2 severity probe on unseen animals. **Outcome: KILL** (2026-09-25). Dense 0.681 = shuffled 0.681 < Kinetics X3D 0.728 within-session AUROC. Results in `$EEG_ROOT/output/ttg_vjepa/step0_results.txt`. |
 | `figures/make_figures.py` | Model diagrams (`fig_video_grader`, `fig_eeg_detector`, `fig_egrg_system`; `.pdf` / `.svg` / `.png`), written next to the script. |
 
 ## Running
