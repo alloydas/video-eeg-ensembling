@@ -88,9 +88,14 @@ NATIVE_EXPECTED = ['n_area_range', 'n_burst1s', 'n_cy_hf_frac', 'n_cy_jump02', '
 
 # ----------------------------------------------------------------------------- models
 
-def fit_logreg(X, y, Cr, w0=None, maxiter=2000):
+def fit_logreg(X, y, Cr, w0=None, maxiter=2000, return_info=False):
     """sklearn-equivalent LogisticRegression(C=Cr, penalty='l2', class_weight='balanced'):
-    minimise Cr * sum_i s_i * logloss_i + 0.5 * ||w||^2 (intercept unpenalised)."""
+    minimise Cr * sum_i s_i * logloss_i + 0.5 * ||w||^2 (intercept unpenalised).
+
+    return_info=True (added for the Step 0 analysis, backward compatible: the default path and
+    its numbers are unchanged) also returns dict(nit, success, grad_inf, maxiter): the L-BFGS-B
+    iteration count, its success flag and the inf-norm of the objective's gradient at the
+    returned solution."""
     n, d = X.shape
     sw = np.where(y > 0, n / (2.0 * max(y.sum(), 1)), n / (2.0 * max((1 - y).sum(), 1)))
 
@@ -100,8 +105,12 @@ def fit_logreg(X, y, Cr, w0=None, maxiter=2000):
         gz = Cr * sw * (expit(z) - y)
         return loss, np.r_[X.T @ gz + w[:-1], gz.sum()]
 
-    w = minimize(f, np.zeros(d + 1) if w0 is None else w0, jac=True, method="L-BFGS-B",
-                 options=dict(maxiter=maxiter)).x
+    res = minimize(f, np.zeros(d + 1) if w0 is None else w0, jac=True, method="L-BFGS-B",
+                   options=dict(maxiter=maxiter))
+    w = res.x
+    if return_info:
+        return w, dict(nit=int(res.nit), success=bool(res.success), maxiter=int(maxiter),
+                       grad_inf=float(np.max(np.abs(f(w)[1]))))
     return w
 
 

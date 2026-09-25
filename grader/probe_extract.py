@@ -83,8 +83,11 @@ def build_feature_net():
 
 
 class ProbeClips(Dataset):
-    def __init__(s, items, rows, cache_dir, retries=2):
-        s.items, s.rows, s.cache_dir, s.retries = items, rows, cache_dir, retries
+    """size: decode resolution (default S = 224, the X3D input; step0_vjepa_extract.py passes
+    256 with cache_dir=None). Frame indices, snippet geometry and the shuffle seed do not
+    depend on it."""
+    def __init__(s, items, rows, cache_dir, retries=2, size=S):
+        s.items, s.rows, s.cache_dir, s.retries, s.size = items, rows, cache_dir, retries, size
 
     def __len__(s):
         return len(s.rows)
@@ -106,14 +109,14 @@ class ProbeClips(Dataset):
             full = C.to_full(p)
             a, src = None, "decode"
             if s.cache_dir:
-                a = tp.FrameCache.get(s.cache_dir, T, S).fetch(p)
+                a = tp.FrameCache.get(s.cache_dir, T, s.size).fetch(p)
                 src = "cache" if a is not None else "decode"
             if a is None:
-                arr, _ = C.decode_linspace(full, T, S)
+                arr, _ = C.decode_linspace(full, T, s.size)
                 a = arr.transpose(3, 0, 1, 2)
             n = C.header_frame_count(full)
             starts, single = C.snippet_starts(n, K, T, STRIDE, BUFFER)
-            dense = C.decode_seek_snippets(full, starts, T, STRIDE, S).transpose(0, 4, 1, 2, 3)
+            dense = C.decode_seek_snippets(full, starts, T, STRIDE, s.size).transpose(0, 4, 1, 2, 3)
             rng = np.random.default_rng(C.clip_seed(p))
             perm = np.stack([rng.permutation(T) for _ in range(K)])
             return dict(ok=True, row=r, y5=int(y5), sparse=torch.from_numpy(np.ascontiguousarray(a)),
@@ -136,15 +139,15 @@ def collate(batch):
     return out
 
 
-def verify_seek(items, rows):
-    """Seek-decoded snippet frames must equal a sequential decode bit-for-bit."""
+def verify_seek(items, rows, size=S):
+    """Seek-decoded snippet frames must equal a sequential decode bit-for-bit (at `size`)."""
     for r in rows:
         full = C.to_full(items[r][0])
         n = C.header_frame_count(full)
         st, _ = C.snippet_starts(n, K, T, STRIDE, BUFFER)
-        a = C.decode_seek_snippets(full, st, T, STRIDE, S)
+        a = C.decode_seek_snippets(full, st, T, STRIDE, size)
         idx = (st[:, None] + STRIDE * np.arange(T)[None]).ravel()
-        b = C.decode_sequential_indices(full, idx, S).reshape(a.shape)
+        b = C.decode_sequential_indices(full, idx, size).reshape(a.shape)
         if not np.array_equal(a, b):
             raise SystemExit(f"ABORT: seek decode is not frame-exact for {items[r][0]}")
     print(f"verify_seek: {len(rows)} clips, seek-decoded snippets bit-identical to a "

@@ -1,0 +1,25 @@
+# V-JEPA 2 venv for grader/step0_vjepa_extract.py (Step 0; see grader/step0_vjepa_prereg.md).
+#
+# The shared eeg conda env (torch 2.4.1+cu121, transformers 4.46.3) has no VJEPA2Model and must
+# never be installed into. This venv layers ONLY the two packages below over it:
+#
+#   /work/mech-ai-scratch/alloy/.conda/envs/eeg/bin/python -m venv --system-site-packages \
+#       /work/mech-ai-scratch/alloy/.venvs/vjepa2
+#   /work/mech-ai-scratch/alloy/.venvs/vjepa2/bin/python -m pip install --require-hashes \
+#       -r grader/requirements-vjepa2.txt
+#
+# Created 2026-09-25. `pip install --dry-run transformers==4.53.0` in the fresh venv resolved to
+# exactly these two (every other dependency of transformers 4.53.0 is already satisfied by the
+# eeg env: huggingface_hub 0.36.2, safetensors 0.8.0, numpy 1.26.4, regex, requests, tqdm,
+# packaging, pyyaml, filelock). tokenizers is only needed because transformers 4.53.0 pins
+# tokenizers>=0.21,<0.22 and the env has 0.20.3; V-JEPA 2 itself uses no tokenizer.
+# torch, numpy, cv2, scipy and sklearn come from the eeg env unchanged (checked in the venv:
+# torch 2.4.1+cu121 from .conda/envs/eeg/lib/python3.11/site-packages).
+#
+# Model weights: HF_HOME=/work/mech-ai-scratch/alloy/hf_cache, facebook/vjepa2-vitl-fpc64-256 at
+# revision b3c1679b7c34d3255ef3547f27c7b226aefab26f (downloaded on the login node; jobs run with
+# HF_HUB_OFFLINE=1).
+transformers==4.53.0 \
+    --hash=sha256:7d8039ff032c01a2d7f8a8fe0066620367003275f023815a966e62203f9f5dd7
+tokenizers==0.21.4 \
+    --hash=sha256:51b7eabb104f46c1c50b486520555715457ae833d5aee9ff6ae853d1130506ff

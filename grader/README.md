@@ -84,6 +84,10 @@ run time, `argv`, the dhlib path and the descriptive source strings (`ttg/` → 
 | `stage1_ensemble.py` | Swaps the fixed X3D into the stored top-3 × 5 ensemble, or adds it. Upper bounds, labelled as such. |
 | `stage1b_prereg.md`, `stage1b_eval.py` | Stage 1b pre-registration (augmentation, bounded logits, early epoch) and its evaluation, exactly as registered. |
 | `probe_extract.py`, `probe_analysis.py` | Stage 2: frozen X3D features (sparse / dense / shuffled) and the pre-registered linear-probe kill test of the dense pathway (outcome: KILL). |
+| `step0_vjepa_prereg.md` | Step 0 pre-registration: does frozen V-JEPA 2 ViT-L carry severe-vs-mild information on unseen animals beyond frozen X3D (B), and as frame order (M)? |
+| `step0_vjepa_extract.py`, `sbatch_vjepa.sh`, `requirements-vjepa2.txt` | Step 0 extraction: V-JEPA 2 features (sparse16 / dense / dense_shuffled at 256, temporal tokens, blocks 17/19/21) for every clip, in the venv `/work/mech-ai-scratch/alloy/.venvs/vjepa2` (transformers 4.53.0 over the eeg env, pinned in `requirements-vjepa2.txt`). Modes `prepare` (CPU), GPU shard ranges, `merge` (CPU), `status`, `DRY_RUN=1`. 8 GPU-hour cap. |
+| `step0_vjepa_analysis.py`, `sbatch_step0_analysis.sh` | Step 0 evaluation (CPU): protocol-B probes, the registered M / B decision and the reported-only analyses. `prepare`, an 18-task array of (contrast, arm) jobs, `assemble`. |
+| `step0_vjepa_synth.py` | Test-only stand-in and planted-signal feature files for the Step 0 analysis, and `--check` of a finished test run. |
 | `sbatch_grader.sh`, `sbatch_cache.sh`, `sbatch_probe.sh`, `submit_ttg.sh` | SLURM drivers (scavenger partition, requeue-safe) and the submission helper. |
 | `stage1.tsv`, `stage1b.tsv` | Config tables for `sbatch_grader.sh`, one array task per line. |
 | `eeg/train_eeg_det.py` | EGRG EEG detector: `train_pooled_eeg`'s TCN, binary, reported at a fixed last epoch, with per-epoch clip and window dumps. Resumable, bit-identical on CPU. |
@@ -122,6 +126,22 @@ $PY grader/eeg/joint_gate.py --regression --out $EEG_ROOT/output/ttg_eeg_gate/<n
 $PY grader/train_grader.py --arch x3d --fix_x3d --heads dual --seed 1 --dry_run --allow_cpu
 $PY grader/eeg/train_eeg_det.py --split subject --fold 0 --seed 1 --epochs 2 --limit 800 --allow_cpu \
     --threads 4 --output $EEG_ROOT/output/ttg_eeg_test/<name>
+```
+
+**Step 0 (V-JEPA 2, `step0_vjepa_prereg.md`).** From the checkout. Inside an interactive SLURM
+job, clear `SLURM_*` before `srun` / `sbatch` (`clean(){ env $(env | sed -n 's/^\(SLURM[A-Za-z0-9_]*\)=.*/-u \1/p') "$@"; }`).
+
+```bash
+SR="srun -A mech-ai-scavenger -q scavenger -p scavenger -t 01:00:00"
+$SR -c 8 --mem=32G bash grader/sbatch_vjepa.sh prepare        # CPU: item list, verify_seek, weights sha256, run.json
+sbatch grader/sbatch_vjepa.sh 0 24; sbatch grader/sbatch_vjepa.sh 24 49   # GPU: pass 1 (seizure), pass 2
+bash grader/sbatch_vjepa.sh status
+$SR -c 4 --mem=48G bash grader/sbatch_vjepa.sh merge          # CPU: features.npz
+P=$(sbatch --parsable grader/sbatch_step0_analysis.sh prepare)
+J=$(sbatch --parsable --dependency=afterok:$P --array=0-17 grader/sbatch_step0_analysis.sh job)
+sbatch --dependency=afterok:$J grader/sbatch_step0_analysis.sh assemble
+# the pre-registered CPU dry run (refuses an existing directory: remove it first)
+rm -rf $EEG_ROOT/output/ttg_tmp/vjepa_dryrun; DRY_RUN=1 $SR -c 8 --mem=32G bash grader/sbatch_vjepa.sh
 ```
 
 **Path rules.**
@@ -202,7 +222,8 @@ but different PDF/SVG metadata.
 | `output/ttg_vsubj/` | `train_grader.py` subject folds (`eeg/video_subject*.tsv`) |
 | `output/ttg_eeg/aligned/`, `output/ttg_eeg/subject/` | `eeg/train_eeg_det.py` (`eeg/eeg_*.tsv`) |
 | `output/ttg_eeg_gate/` | `eeg/joint_gate.py`, `eeg/check_folds.py --json` |
-| `output/ttg_probe/`, `output/ttg_tmp/` | `probe_extract.py`, `probe_analysis.py`; smoke tests |
+| `output/ttg_probe/`, `output/ttg_tmp/` | `probe_extract.py`, `probe_analysis.py`; smoke tests (Step 0 tests: `output/ttg_tmp/vjepa_<name>/`) |
+| `output/ttg_vjepa/` | `step0_vjepa_extract.py` (`shards/`, `budget/`, `budget.json`, `features.npz`), `step0_vjepa_analysis.py` (`step0_analysis/`, `step0_results.json`, `step0_results.txt`) |
 | `cache_frames/f16s224/` | `build_f16_cache.py` |
 | `logs/ttg/` | the SLURM drivers |
 
