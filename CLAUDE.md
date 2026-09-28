@@ -198,6 +198,42 @@ What the matched split (5,279 clips, 200 severe) establishes:
   recovers little (+0.0025 vs +0.0159; +0.0022 vs +0.0115), so those gains come from EEG.
   Averaging's severe loss at the operating point, though, is a threshold effect.
 
+## `rawdata/` — the days-long recordings the clips were cut from
+
+The raw recordings are READ-ONLY, at `/work/mech-ai/alloydas/EEG/Data` (2.56 TB, 23 animal folders,
+about 47 days each). They were uploaded 2026-09-28 and audited read-only by `rawdata/`. Outputs are
+in `$EEG_ROOT/output/raw_audit/`.
+
+- **Layout.**
+  - One camera shows two animals. The first-named animal in the camera name is on the left.
+  - Every camera file is stored under both partners' folders: 986 GB of byte-identical duplicates.
+  - Per-animal crop boxes (unscaled, pixel-exact across days): `raw_audit/align/crop_boxes.csv`.
+- **Clocks.**
+  - The mp4 file name is the UTC **close** time.
+  - The true start is XML `DSI_utc_start_time + DSI_sync_offset/1e7`.
+  - The EDF header start is naive local time, about 18.4 s before the first video of a day folder.
+    It drops the repeated hour at the 2023-11-05 fall-back.
+- **EEG channel.** It is labelled `ECG`, or `EEG` for RN219 and RN243. Read `EEG` first, then `ECG`.
+- **Problems.**
+  - Unreadable: one mp4, `RN199-RN201.20231213214000`. At most about 2 h of it is recoverable.
+  - Unfinalised: one EDF, `DONE_RN203/11-15-2023`, with 23.6 h readable.
+  - 58 EDFs are under 1 h, so those days have video without EEG.
+- **90 labelled clips have video from the wrong time** (EEG and label are right):
+  - 10 from the 10-13 room-D file, about 175 min off;
+  - 50 after a +61 s PC-clock step in the 11-03 and 12-05 room-C files;
+  - 27 cut 1 h early across the DST change;
+  - 3 in the repeated hour.
+
+  By class: 43 non-seizure, 35 Stage 2, 10 Stage 3, 2 Stage 4. Also, one non-seizure clip
+  (`RN242/10-12-2023/clip_03_vs_seizure_04_…`) contains an annotated Stage 3 seizure.
+- **Annotations.**
+  - The xlsx event logs are the only source.
+  - Every labelled seizure matches one event exactly.
+  - 328 annotated Stage 2–5 seizures with video were never clipped (S4 24, S5 1).
+  - 782 have EEG but no video.
+- **RN201, RN203, RN243** (not in the labelled 20) have 0, 0 and 6 annotated events in about 47
+  days each. They are plausibly controls, but no document says so.
+
 ## Related repositories
 
 Each is a separate folder with its own CLAUDE.md. Do not re-add their code here.
