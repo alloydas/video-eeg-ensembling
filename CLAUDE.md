@@ -226,6 +226,20 @@ in `$EEG_ROOT/output/raw_audit/`.
 
   By class: 43 non-seizure, 35 Stage 2, 10 Stage 3, 2 Stage 4. Also, one non-seizure clip
   (`RN242/10-12-2023/clip_03_vs_seizure_04_…`) contains an annotated Stage 3 seizure.
+- **Step 1, done 2026-09-29** (`rawdata/recut_clips.py`, `rescore_recut.py`; outputs in
+  `$EEG_ROOT/output/ttg_recut/`; nothing in `data_full/` was modified).
+  - 172 candidate clips were each measured by EDF-Activity vs crop-motion lag.
+  - 81 were re-cut to the right time, reproducing the parent ffmpeg pipeline exactly.
+  - 11 are excluded: 5 labels have no video; 5 on 12-05 are unresolved; 1 is the mislabelled negative.
+  - Re-scored without retraining, the change is below seed noise: 9-pair EGRG 3-class
+    0.7488 → 0.7485, 5-class 0.5471 → 0.5452. Retraining is not warranted on its own.
+  - **5 "seizure" labels have no seizure in EEG or in the corrected video.** They are RN229
+    s39/s42, RN210 s22/s23 and RN213 s41. Two are duplicate labels of a neighbouring seizure,
+    shifted by a clock change. So some xlsx annotations inherit the clock defects.
+  - EGRG's Stage-2 hits partly came from quiet wrong-time video under an EEG seizure. With the
+    correct video, the video grades those clips S3/S4.
+  - Cameras RN242-RN243 and RN229 run 2e-4 slow: up to +5 s late at the end of a 7.5 h file,
+    across all their clips. Not corrected.
 - **Annotations.**
   - The xlsx event logs are the only source.
   - Every labelled seizure matches one event exactly.

@@ -214,3 +214,188 @@ import.
 
 `bash rawdata/submit_annotations.sh` runs `all` on one scavenger node (`CMD=report` for the report
 only). Each unit writes `cache/<unit>_<animal>.json` and is skipped when that file exists.
+
+# `recut_clips.py` — re-cut the labelled clips whose video is from the wrong time
+
+Measures, for every labelled clip that could be affected, where its video really is. Clips whose video is
+from the wrong time are re-cut from the raw recording with the parent pipeline's own two ffmpeg steps.
+Everything is written to `$EEG_ROOT/output/ttg_recut/`, and `out_path()` refuses any other path. Nothing
+under the raw tree, `data/`, `data_full/`, `cache_frames/` or another run directory is touched.
+`bash rawdata/submit_recut.sh motion|analyze|recut|verify|all` runs the stages on the CPU scavenger QoS.
+
+| stage | what | output |
+|---|---|---|
+| `plan` | candidates: every `discover()` clip cut from a timing-defect file (10-13 room D, 11-03 and 12-05 room C), or from a file spanning the 2023-11-05 fall-back, or labelled 01:00–02:00 on 11-05 (172). Also builds the decode jobs and picks 5 unaffected reproduction controls. | `plan/` |
+| `motion` | one full decode per camera file (19): the mean \|frame difference\| per frame in every known animal box, pts from the integer pts × stream time base | `motion/*.npz` |
+| `activity` | the 1 Hz EDF `Activity` channel, and per-record ECG flatness (telemetry gaps) | `activity/*.npz` |
+| `measure` | per clip: Activity over the label span ±30 min against box motion over ±4 h (masked NCC at 1 s), refined ±30 s and to 0.1 s; the partner animal on the same camera over the same window; clip-sized scan windows every 600 s along every decoded file | `measure/clips.csv`, `measure/profiles.csv` |
+| `calibrate` | the same windows scored against the cause model, to choose the motion transform and the "strong" thresholds | `calibrate/*.csv` |
+| `decide` | aligned / misaligned / no_video / unresolved / flagged, against the cause model | `measure/decisions.csv`, `exclude.csv` |
+| `recut` | `ffmpeg -ss <seek> -i raw -t <dur> -c copy -avoid_negative_ts make_zero`, then `crop_clips.py`'s re-encode (`-vf crop=trunc(iw*wf/2)*2:… -c:v libx264 -preset fast -crf 18 -pix_fmt yuv420p -an -threads 2`) | `data_full/<clip rel>/video.mp4`, `manifest.csv` |
+| `repro` | the same two steps at the ORIGINAL seek for 5 unaffected clips | `repro/` |
+| `verify` | decodes; frame count; NCC of every frame against the raw frames at the corrected time; Activity vs motion at the new and at the original location | `verify/verify.csv`, `verify/repro.csv` |
+| `report` | | `summary.txt`, `summary.json` |
+
+**The offset convention.** The offset is the raw pts that shows the labelled instant, minus the pts the cutter
+used, on the cutter's nominal timeline `int(DSI_utc_start_time) + pts`. It is the lag of `verify/v_activity.py`.
+Expected values: 10-13 room D about −10,523 s; clock step −59.8 to −60.8 s; DST +3600 s (the video was cut 1 h
+early, so the right frames are 1 h later).
+
+**Method notes (all measured here):**
+- Motion is rank-transformed over the searched ±4 h series. The values are 0.01–0.3 grey levels, so
+  `log1p` is linear there, and one person or light change that meets one Activity count dominated Pearson r:
+  14% of strong scan windows were wrong with `log1p`, and none with `rank`.
+- A measurement is strong when r ≥ 0.10, z ≥ 4 over the lag curve, it leads the next peak (> 15 s away) by
+  ≥ 0.04, and it is sharp: peak minus the best r 4–15 s away ≥ 0.02. Of 842 scan windows with a model
+  truth, 384 are strong and none contradicts the cause model (`calibrate/rank_hp0_w3600.csv`).
+- An aligned clip does not measure 0. The cutter ignores `DSI_sync_offset`, and Activity lags motion by
+  λ = 0.74 s (median of 28 clip controls and 154 aligned scan windows). The offset is therefore
+  lag − (−sync − λ), in the cutter's own convention.
+- RN242-RN243 and RN229 stamp pts slow by 2.0e-4 (frames are real time at 15 fps: `nb_frames/15` equals the
+  wall span), so the offset drifts up to +5.4 s along a 7.5 h file.
+  - The expected value is therefore an interval, from no drift to full drift.
+  - A DST clip late in its file has its true frames in the camera's NEXT file, where the drift starts again.
+    The nominal timeline jumps by 5.4 s at that boundary, so windows are split there.
+- The 3 clips labelled in the repeated hour measure +3600 s. So the EDF's naive 01:00–02:00 on 11-05 is the
+  CST hour, and the EDF dropped the CDT one.
+- Weak clips take their partner's strong measurement, or the family's consensus: ≥ 3 measurements on the
+  same file and side within ±1 h, within ±1.5 s of each other, from ≥ 2 independent units or with a strong
+  member, and inside the model interval. As a last resort they take the model midpoint, and only when the
+  family's strong clips on ≥ 2 cameras agree with the model to within 2 s and the interval is ≤ 6 s wide.
+  Otherwise they are unresolved.
+- On 10-13 no file of either camera covers local 09:34–12:32. Clips labelled there have no video at all
+  (`no_video`).
+
+### Results (2026-09-29, `ttg_recut/summary.txt`)
+
+- **Candidates: 172.**
+  - 81 aligned (the before-change and before-step controls).
+  - 81 misaligned and re-cut.
+  - 5 `no_video`.
+  - 5 unresolved.
+  - 0 flagged.
+- **Wrong-time video: 86 clips** (42 non-seizure, 32 Stage 2, 10 Stage 3, 2 Stage 4): 81 re-cut plus 5 never recorded.
+- **Re-cut clips by class:** 39 / 30 / 10 / 2.
+- **Offsets used (s):**
+  - DST +3600.0, range +3599.7 to +3605.2 (n = 27).
+  - Repeated hour +3600.2 (n = 3).
+  - 10-13 −10,523.3, range −10,524.5 to −10,523.0 (n = 5).
+  - Clock step −60.4, range −61.0 to −59.7 (n = 46).
+- **Source of the offset:** 35 measured, 7 partner, 36 family consensus, 3 model midpoint.
+  - 9 re-cuts come from the camera's next file.
+  - One (RN229 `seizure_41`) runs 8.7 s past its file's end and is truncated there, as the parent cutter
+    would truncate it.
+- **Against the brief's 90:** all 81 re-cuts are among them, and 5 are `no_video`. 4 are unresolved: 12-05
+  clock-step clips on RN235 (whose partner RN222 has no EEG that day) and on RN238 (whose partner RN237
+  measures −66.4 s, against the model's −60.5 s).
+  - One more unresolved clip (RN238 `seizure_02`, 12-05, before the step) is expected aligned but was not confirmed.
+- **Verification:** all 81 decode.
+  - Each starts at the keyframe at or before the corrected seek, and its frames match the raw frames there
+    (mean NCC ≥ 0.9997).
+  - Frame counts equal the copy-cut expectation.
+- **Activity check, ±15 min window:**
+  - The best lag lies within ±3 s of the method baseline for 70 of 81 at the new location, and for 2 of 81 at
+    the original.
+  - r at lag 0 is higher at the new location in 75 of 79.
+  - 52 pass (23 of them with z ≥ 4), and 28 are weak: too little Activity, a median of 13 counts against 86.
+  - None has a clear peak elsewhere.
+  - The clip-only check (60–120 one-second bins) is indeterminate for 78 of 81.
+- **Reproduction:** the same two ffmpeg steps at the original seek reproduce 5 unaffected `data_full` clips
+  frame for frame (MAE 0.0). The files differ only in container and encoder tags: ffmpeg 4.3 and x264 core 161
+  here, against 4.4 and 163 there.
+
+# `rescore_recut.py` — the EEG-gated grader re-scored with the re-cut clips (no retraining)
+
+Stages: `cache`, `infer`, `patch`, `grid`, `compare`, `analyse` (the module docstring has the details).
+Everything is written under `$EEG_ROOT/output/ttg_recut/`. No `grader/` script was changed: `joint_gate.py` runs
+in-process with two logged adaptations, the `--out` prefix and the per-fold clip-set check minus the excluded
+clips. `bash rawdata/submit_rescore.sh prep|grid|analyse` runs the same stages on the CPU scavenger QoS; its
+header lists what was actually run.
+
+**Steps and checks (2026-09-29):**
+
+- **Cache.** `cache_f16s224/` holds the 81 re-cut clips, built with the f16s224 rule (`ttg_common.decode_linspace`).
+  - All 81 rows are bit-identical to `train_classifier.load_clip`.
+  - 3 unaffected clips rebuilt from `data_full/` are bit-identical to `cache_frames/f16s224`.
+  - So are the 5 reproduction controls from `ttg_recut/repro/`. That tests the whole re-cut chain.
+- **Inference.** 30 runs (`ttg_vsubj/{x3dfix,x3dbug}_dual_s{1,2,3}_fold{0-4}`) were run on CPU in fp32.
+  - Each `last.pt` was checked to be the state after epoch 12 of 12.
+  - The run key matches `config.json`, and the history and dump epochs are 12.
+  - **Equivalence** against the stored `val_ep12.npz`, which was written under CUDA fp16 autocast:
+    - 150 unaffected control rows and 486 re-cut rows re-predicted on their ORIGINAL frames.
+    - Argmax is identical on 1272 of 1272 (row, head) pairs.
+    - Mean |Δp| is 2–4e-4. The maximum is 0.0205, and the largest |Δ log p| (p > 1e-3) is 0.16.
+  - The tolerance |Δp| ≤ 0.02, set before the check, was exceeded on 2 rows (0.0205 and 0.0200). The patch
+    proceeded on the argmax criterion under `--accept_precision_noise`. This is recorded in
+    `infer/equivalence.json` and in every `patch.json`.
+  - CPU fp16 autocast on one run is no closer (max 4e-3 against fp32's 2.5e-3 there).
+  - **Fragile predictions.** 22 of the 972 new (row, head) predictions have a top-2 margin inside 2 × the
+    measured noise. 16 of those changed argmax, so they could land either way under GPU fp16.
+- **Patch.** The patched dumps are in `vsubj_patched/<run>/val_ep12.npz`:
+  - 486 rows replaced (81 clips × 6 runs). argmax changed on 249 (g3) and 256 (g5) of them.
+  - 66 rows removed (11 excluded clips × 6).
+  - Every other field is kept.
+  - `vsubj_exclonly/` holds the same dumps with the removals only.
+  - The patched dumps were written with numpy 2.3.4, since `patch` needs numpy only, and joint_gate read them
+    with 1.26.4.
+- **Wrapper faithfulness.** `grid/repro_B_{x3dfix,x3dbug}_grid3x3` is the stored dumps run through the wrapper.
+  Against `ttg_eeg_gate/seeds/B_*_grid3x3`, it differs in 0 fields of `results.json` and `gate.json` (outside
+  created / argv / secs), and `results.txt` is identical after the timestamp line.
+- **Grids.** They are in `grid/B_{x3dfix,x3dbug}_grid3x3` (patched) and `grid/exclonly_B_*`. The per-pair
+  numbers in `rescore/summary.json` equal the grids' exactly.
+
+**Results.** 9 single-video × single-EEG pairs. Means are given as before → after.
+- "Before" is the stored dumps: 24,452 clips.
+- "After" is the patched dumps: 24,441 clips, with the 11 excluded clips dropped and counted.
+- The exclusions alone move every number by ≤ 0.0003.
+
+| | x3dfix g3 | x3dfix g5 | x3dbug g3 | x3dbug g5 |
+|---|---|---|---|---|
+| video alone | 0.7082 → 0.7086 | 0.5034 → 0.5032 | 0.7175 → 0.7177 | 0.4469 → 0.4463 |
+| EGRG | 0.7488 → 0.7485 | 0.5471 → 0.5452 | 0.7578 → 0.7575 | 0.5032 → 0.5013 |
+| EGRG − video | +0.0406 → +0.0399 | +0.0437 → +0.0420 | +0.0403 → +0.0398 | +0.0563 → +0.0550 |
+| EGRG Stage-2 hits (g5) / mild hits (g3) | 9989.4 → 9976.8 of 10852 → 10846 | 361.1 → 347.9 of 1457 → 1452 | 9968.8 → 9959.8 | 460.7 → 446.1 |
+| severe hits, video / EGRG (of 1257) | 406.7 / 405.7 → 405.3 / 405.6 | 401.0 / 401.0 → 399.7 / 400.9 | 444.0 / 446.0 → 442.3 / 446.0 | 425.0 / 426.7 → 423.0 / 426.7 |
+| within-session severe AUROC (video's) | 0.7415 → 0.7358 | 0.7403 → 0.7344 | 0.7548 → 0.7525 | 0.7515 → 0.7488 |
+
+- **Predictions that changed class (mean per pair).**
+  - Video: 40–43 of the 81 re-cut clips, and 0 others.
+  - EGRG on the re-cut clips: 6.8 (x3dfix g3), 20.1 (x3dfix g5), 11.9 (x3dbug g3), 28.4 (x3dbug g5).
+  - EGRG elsewhere: 2–4 clips, through the gate refit (about 2 of them from the exclusions alone).
+- **The corrected video sees the seizures.** Of the 42 re-cut seizure clips, a majority of video seeds call
+  seizure on 7 before and 35 after (x3dfix; x3dbug: 8 → 33).
+- **EGRG gets the corrected clips *less* often right.** Per pair on the 81 clips: g3 77.6 → 71.9 and g5
+  58.8 → 47.0 (x3dfix). There are two reasons:
+  - **Stage 2 is overgraded.** On the 30 Stage-2 clips, the wrong-time video looked quiet, and EGRG gated them
+    in on the EEG and took a within-seizure split that fell on S2 (13.9 per pair). The real video is graded S3
+    or S4 (23.7 + 4.0 per pair, S2 2.3). Part of EGRG's Stage-2 hits therefore come from quiet video under an
+    EEG seizure.
+  - **5 re-cut seizure clips are EEG-disputed.** The EEG detector at the label says no seizure: 3-seed P(sz)
+    0.02–0.29, against a base rate of 556 / 12,109 seizure clips below 0.5. The ORIGINAL video showed a seizure
+    in 6 of 6 runs, and the re-cut video shows none in 6 of 6.
+    - They are RN229 `seizure_39` and `seizure_42` (S4, DST), RN210 `seizure_22` and `seizure_23` (S3, DST),
+      and RN213 `seizure_41` (S3, clock step).
+    - Two are demonstrably duplicate labels:
+      - RN229 `seizure_42`'s original window is `seizure_41`'s corrected window (5 s apart, the same footage).
+      - RN213 `seizure_41`'s original window is `seizure_42`'s corrected window (1.8 s apart; the labels are
+        59 s apart, the size of the clock step).
+    - For these 5 the premise "label and EEG right, video wrong" fails.
+    - Removing them from before and after (the `-D` rows, a sensitivity analysis chosen on the scored clips)
+      leaves the result unchanged: x3dfix EGRG g5 0.5472 → 0.5453.
+- **Headline ensemble rows (grid, animal bootstrap).**
+  - x3dfix g3: EGRG − video +0.0366 [+0.0219, +0.0546] → +0.0358 [+0.0213, +0.0535].
+  - x3dfix g5: +0.0474 → +0.0452.
+
+**Retraining.**
+- **Exposure.** Every run shares split_subjects(seed 49) folds, so each fold's training set holds the same
+  affected clips whatever the seed or recipe.
+  - Wrong-time clips in training: 61–82 per fold (70 / 69 / 62 / 61 / 82). That is 0.3–0.4% of the ~17–21k
+    training clips.
+  - By class that is 30–39 non-seizure (0.33%), 22–32 Stage 2 (1.8–3.5% of Stage-2 training), 6–9 Stage 3
+    (0.1%) and 0–2 Stage 4 (0.2%).
+  - Each fold also holds 2–5 unresolved clips and 0–1 mislabelled negative.
+- **Effect.** It is not measured. Expected to be below seed noise: video 5-class sd 0.010 across seeds, while
+  the whole val-side correction moved EGRG by ≤ 0.002.
+- **Not recommended now.** Fix the labels first (the 5 EEG-disputed clips, including 2 duplicates across clock
+  changes; the mislabelled negative; the 5 unresolved). Retrain once, together with larger data changes such as
+  the 328 unclipped annotated seizures.
