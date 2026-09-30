@@ -206,7 +206,9 @@ in `$EEG_ROOT/output/raw_audit/`.
 
 - **Layout.**
   - One camera shows two animals. The first-named animal in the camera name is on the left.
-  - Every camera file is stored under both partners' folders: 986 GB of byte-identical duplicates.
+  - Every camera file is stored under both partners' folders. Since 2026-09-30 the two paths are
+    hard links to one inode: 4,944 pairs, 986 GB freed, each byte-compared first
+    (`rawdata/dedup_hardlink.py`, log in `raw_audit/dedup/`). Editing one path edits both.
   - Per-animal crop boxes (unscaled, pixel-exact across days): `raw_audit/align/crop_boxes.csv`.
 - **Clocks.**
   - The mp4 file name is the UTC **close** time.
