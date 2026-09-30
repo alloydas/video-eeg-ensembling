@@ -254,6 +254,21 @@ in `$EEG_ROOT/output/raw_audit/`.
       RN201's: camera cross-talk.
     - RN227 seizure_110's clip EEG matches no raw EDF segment within ±48 h.
     - RN243's Stage 2 annotation is its cage-mate's seizure.
+- **Step 3, done 2026-09-30** (`rawdata/cut_new_clips.py`, `$EEG_ROOT/output/ttg_newclips/`; not
+  merged into `data_full/`).
+  - 505 new clips: 327 seizures (S2 67, S3 235, S4 24, S5 1) and 178 paired negatives. They were
+    cut by the parent pipeline exactly (EEG byte-identical on controls). One event is excluded
+    (its onset is past the end of its file).
+  - Where they land: 413 fall in fold 0 (RN235 321, RN213 92).
+  - Review before any retrain:
+    - RN235 11-30 seizure_92: the detector says no seizure, but the raw EEG line length supports one.
+    - RN197 seizure_56: a 5.3-s "Stage 5", implausible for a Racine 5.
+    - RN235 11-18 clip_19 and clip_26: negatives with sustained seizure-like EEG, while the animal
+      is motionless.
+  - Encoder difference: new crops use x264 core 161, the old ones core 163. The grader is brittle
+    to encoding (see step 2).
+  - Merging it into the dataset needs: `data/` keys, rebuilt frame caches, and rebuilt EEG segment
+    caches (`ttg_newclips/integration.txt`).
 - **Annotations.**
   - The xlsx event logs are the only source.
   - Every labelled seizure matches one event exactly.
