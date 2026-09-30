@@ -240,6 +240,20 @@ in `$EEG_ROOT/output/raw_audit/`.
     correct video, the video grades those clips S3/S4.
   - Cameras RN242-RN243 and RN229 run 2e-4 slow: up to +5 s late at the end of a 7.5 h file,
     across all their clips. Not corrected.
+- **Step 2, the false-alarm scan: STOPPED by its pre-registered validation** (2026-09-30,
+  `rawdata/scan_prereg.md`, `$EEG_ROOT/output/ttg_scan/`). No window was scanned; it used 0.6 GPU-h.
+  - Re-decoding the same frames from the raw video (differences of about 0.8 grey levels from the
+    crf-18 training cache) flips 4–5% of per-head video argmax decisions. Keyframe snapping flips
+    12–14%. The EGRG seizure flag agrees 99.4% and 98.5% respectively.
+  - **So the video grader is brittle to invisible encoding differences.** A deployment on
+    freshly decoded video will not reproduce the clip-level decisions exactly.
+  - Also found:
+    - Room-C files `.20231109055600` are about 13 s off the EDF clock, so 52 labelled clips may
+      have video 13 s off. This was not corrected in step 1.
+    - RN203's box includes the bottom of RN199's cage, and the labelled RN204 box includes
+      RN201's: camera cross-talk.
+    - RN227 seizure_110's clip EEG matches no raw EDF segment within ±48 h.
+    - RN243's Stage 2 annotation is its cage-mate's seizure.
 - **Annotations.**
   - The xlsx event logs are the only source.
   - Every labelled seizure matches one event exactly.
